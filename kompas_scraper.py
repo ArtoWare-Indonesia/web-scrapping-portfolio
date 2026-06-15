@@ -1,24 +1,25 @@
 import requests
 from bs4 import BeautifulSoup
+import csv
 
 url = "https://www.kompas.com"
+response = requests.get(url)
 
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
+soup = BeautifulSoup(response.text, "html.parser")
 
-try:
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
+headlines = []
 
-    soup = BeautifulSoup(response.text, "html.parser")
+for title in soup.find_all("h2"):
+    text = title.get_text(strip=True)
 
-    print("=== HEADLINES KOMPAS ===\n")
-    for i, title in enumerate(soup.find_all("h2"), start=1):
-        print(f"{i}. {title.get_text(strip=True)}")
-    with open("headlines.txt", "w", encoding="utf-8") as file:
-        for title in soup.find_all("h2"):
-            file.write(title.get_text(strip=True) + "\n")
+    if len(text) > 20 and text not in ["Lihat semua", "Produk Rekomendasi"]:
+        headlines.append(text)
 
-except requests.exceptions.RequestException as e:
-    print(f"Error: {e}")
+with open("headlines.csv", "w", newline="", encoding="utf-8") as file:
+    writer = csv.writer(file)
+    writer.writerow(["Headline"])
+
+    for headline in headlines:
+        writer.writerow([headline])
+
+print(f"Berhasil menyimpan {len(headlines)} headline ke headlines.csv")
